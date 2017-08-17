@@ -34,9 +34,10 @@ function assetsOfChunks(namedChunks, selected) {
 
 function injectWithin(html, startIdentifier, endIdentifier, content, purified) {
     let startIndex = html.indexOf(startIdentifier),
-        endIndex = html.indexOf(endIdentifier)
+        restHtml = html.substr(startIndex, html.length - 1),
+        endIndex = startIndex + restHtml.indexOf(endIdentifier);
     if (startIndex < 0 || endIndex < 0) {
-        return html
+        return html;
     }
     let previousInnerContent = html.substring(startIndex + startIdentifier.length, endIndex)
     let ident = leadingWhitespace(previousInnerContent)
