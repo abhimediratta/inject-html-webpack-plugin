@@ -13,23 +13,35 @@ function InjectHtmlWebpackPlugin(options) {
     this.runing = false
 }
 
-function assetsOfChunks(namedChunks, selected) {
+function assetsOfChunks(namedChunks, selected, options) {
     let assets = {
         js: [],
         css: []
     }
-    let chunks = []
+    let chunks = [];
+
     selected.forEach(function(chunkName) {
         chunks = chunks.concat(namedChunks[chunkName] && namedChunks[chunkName].files || [])
-    })
+    });
     chunks.forEach(function(v) {
         if (/\.js$/.test(v)) {
-            assets.js.push(v)
-        } else if (/\.css$/.test(v)) {
-            assets.css.push(v)
+            assets.js.push(v);
+        } else if (/\.css$/.test(v) && !(options.cssChunkOrder && options.cssChunkOrder.length > 0)) {
+            assets.css.push(v);
         }
-    })
-    return assets
+    });
+    if (options.cssChunkOrder && options.cssChunkOrder.length > 0) {
+        options.cssChunkOrder.forEach(function (chunkName) {
+          if (namedChunks[chunkName] && namedChunks[chunkName].files) {
+            namedChunks[chunkName].files.forEach(function (fileName) {
+              if (/\.css$/.test(fileName)) {
+                assets.css.push(fileName);
+              }
+            });
+          }
+        });
+    }
+    return assets;
 }
 
 function injectWithin(html, startIdentifier, endIdentifier, content, purified) {
@@ -87,7 +99,7 @@ InjectHtmlWebpackPlugin.prototype.apply = function(compiler) {
             callback()
             return
         }
-        let assets = assetsOfChunks(namedChunks, selected)
+        let assets = assetsOfChunks(namedChunks, selected, options);
 
         let jsLabel = assets['js'].map(function(v) {
             return '<script src="' + applyTransducer(v, transducer) + '"></script>'
